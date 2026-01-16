@@ -2,46 +2,81 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>연금복권 번호 생성기</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>연금복권 분석 & 추천</title>
   <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
   <main class="container">
     <header class="header">
-      <h1>연금복권 번호 생성기</h1>
-      <p class="sub">버튼 한 번으로 조 + 6자리 번호를 랜덤 생성</p>
+      <h1>연금복권 분석 & 추천</h1>
+      <p class="sub">최근 30회 당첨 데이터를 기반으로 분석하고 추천번호를 생성합니다.</p>
     </header>
 
-    <section class="controls card">
+    <section class="card">
       <div class="row">
-        <label class="label" for="count">생성 개수</label>
-        <input id="count" class="input" type="number" min="1" max="20" value="5" />
+        <button id="btnLoad" class="btn primary">최근 30회 불러오기</button>
+        <button id="btnRecommend" class="btn">추천번호 5개 생성</button>
+        <button id="btnCopyReco" class="btn">추천번호 복사</button>
       </div>
-
-      <div class="buttons">
-        <button id="btnGenerate" class="btn primary">번호 생성</button>
-        <button id="btnClear" class="btn">초기화</button>
-      </div>
-
-      <div id="toast" class="toast" aria-live="polite"></div>
+      <p class="muted" id="status">데이터를 불러오려면 버튼을 눌러주세요.</p>
+      <div class="toast" id="toast"></div>
     </section>
 
-    <section class="result card">
-      <div class="resultHeader">
-        <h2>생성된 번호</h2>
-        <p class="hint">번호를 클릭하면 복사돼요</p>
-      </div>
+    <section class="grid2">
+      <section class="card">
+        <h2>조(1~5) 빈도</h2>
+        <canvas id="chartGroup" height="150"></canvas>
+        <div id="groupSummary" class="summary"></div>
+      </section>
 
-      <ul id="list" class="list"></ul>
-      <p id="empty" class="empty">아직 생성된 번호가 없어요.</p>
+      <section class="card">
+        <h2>자리별 숫자 빈도(0~9)</h2>
+        <canvas id="chartDigit0" height="150"></canvas>
+        <p class="muted mini">※ “십만 자리(1번째 자리)” 분포를 보여줍니다. (나머지 자리도 버튼으로 전환 가능)</p>
+        <div class="row tight">
+          <select id="posSelect" class="input">
+            <option value="0">1번째 자리(십만)</option>
+            <option value="1">2번째 자리(만)</option>
+            <option value="2">3번째 자리(천)</option>
+            <option value="3">4번째 자리(백)</option>
+            <option value="4">5번째 자리(십)</option>
+            <option value="5">6번째 자리(일)</option>
+          </select>
+          <button id="btnUpdatePos" class="btn">자리 변경</button>
+        </div>
+      </section>
+    </section>
+
+    <section class="card">
+      <h2>추천번호</h2>
+      <ul id="recoList" class="list"></ul>
+      <p id="recoEmpty" class="muted">아직 추천번호가 없어요.</p>
+    </section>
+
+    <section class="card">
+      <h2>최근 30회 결과</h2>
+      <div class="tableWrap">
+        <table class="table" id="recentTable">
+          <thead>
+            <tr>
+              <th>회차</th>
+              <th>날짜</th>
+              <th>번호</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
     </section>
 
     <footer class="footer">
-      <small>⚠️ 본 사이트는 재미용 번호 생성기입니다.</small>
+      <small>⚠️ 본 추천은 통계 기반 “가중 랜덤”이며 당첨을 보장하지 않습니다.</small>
     </footer>
   </main>
 
+  <!-- Chart.js (프레임워크 아님) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="./app.js"></script>
 </body>
 </html>
