@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>연금복권 번호 생성기</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <main class="container">
+    <header class="header">
+      <h1>연금복권 번호 생성기</h1>
+      <p class="sub">버튼 한 번으로 조 + 6자리 번호를 랜덤 생성</p>
+    </header>
+
+    <section class="controls card">
+      <div class="row">
+        <label class="label" for="count">생성 개수</label>
+        <input id="count" class="input" type="number" min="1" max="20" value="5" />
+      </div>
+
+      <div class="buttons">
+        <button id="btnGenerate" class="btn primary">번호 생성</button>
+        <button id="btnClear" class="btn">초기화</button>
+      </div>
+
+      <div id="toast" class="toast" aria-live="polite"></div>
+    </section>
+
+    <section class="result card">
+      <div class="resultHeader">
+        <h2>생성된 번호</h2>
+        <p class="hint">번호를 클릭하면 복사돼요</p>
+      </div>
+
+      <ul id="list" class="list"></ul>
+      <p id="empty" class="empty">아직 생성된 번호가 없어요.</p>
+    </section>
+
+    <footer class="footer">
+      <small>⚠️ 본 사이트는 재미용 번호 생성기입니다.</small>
+    </footer>
+  </main>
+
+  <script src="./app.js"></script>
+</body>
+</html>
