@@ -159,7 +159,7 @@
             <li>업데이트: GitHub Actions 자동 갱신</li>
           </ul>
         </div>
-        <button id="themeToggle" class="theme-toggle" type="button" aria-pressed="false" aria-label="다크 모드로 전환">
+        <button id="themeToggle" class="theme-toggle" type="button" aria-pressed="false" aria-label="다크 모드로 전환" data-analytics-event="toggle_theme">
           <span class="theme-toggle-track" aria-hidden="true">
             <span class="theme-toggle-thumb"></span>
           </span>
@@ -170,9 +170,9 @@
 
     <section class="card controls-card">
       <div class="row">
-        <button id="btnLoad" class="btn primary">최근 30회 불러오기</button>
-        <button id="btnRecommend" class="btn">추천번호 5개 생성</button>
-        <button id="btnCopyReco" class="btn">추천번호 복사</button>
+        <button id="btnLoad" class="btn primary" data-analytics-event="load_results">최근 30회 불러오기</button>
+        <button id="btnRecommend" class="btn" data-analytics-event="generate_recommendations">추천번호 5개 생성</button>
+        <button id="btnCopyReco" class="btn" data-analytics-event="copy_recommendations">추천번호 복사</button>
       </div>
       <p class="muted" id="status" role="status" aria-live="polite">페이지를 열면 최신 데이터를 자동으로 불러옵니다.</p>
       <div class="toast" id="toast"></div>
@@ -237,6 +237,7 @@
 
   <!-- Chart.js (프레임워크 아님) -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="./analytics.js"></script>
   <script src="./app.js"></script>
 </body>
 </html>
