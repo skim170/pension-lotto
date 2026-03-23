@@ -114,6 +114,46 @@ async function loadResults() {
   return data.slice(0, 30);
 }
 
+function renderDashboard(list) {
+  const groupFreq = analyzeGroupFreq(list);
+  const posFreq = analyzeDigitPosFreq(list);
+
+  renderRecentTable(list);
+  renderGroupSummary(groupFreq);
+  drawGroupChart(groupFreq);
+  drawDigitChart(posFreq, Number($posSelect.value));
+}
+
+function buildStatusMessage(list, prefix = "로딩 완료") {
+  if (!list.length) return `데이터 ${prefix}`;
+
+  const latest = list[0];
+  const latestDate = latest.date ? `, 최신 ${latest.round}회차 ${latest.date}` : `, 최신 ${latest.round}회차`;
+  return `✅ 최근 ${list.length}회 데이터 ${prefix}${latestDate}`;
+}
+
+async function loadAndRenderResults({ showSuccessToast = false } = {}) {
+  try {
+    $status.textContent = showSuccessToast ? "데이터 불러오는 중..." : "최신 데이터를 자동으로 불러오는 중...";
+    recent30 = await loadResults();
+    renderDashboard(recent30);
+    $status.textContent = buildStatusMessage(recent30, "반영 완료");
+
+    if (showSuccessToast) {
+      showToast("최근 30회 불러오기 완료!");
+    }
+  } catch (e) {
+    console.error(e);
+    $status.textContent = showSuccessToast
+      ? "❌ 데이터 로딩 실패 (results.json 확인 필요)"
+      : "❌ 자동 로딩 실패 (results.json 확인 필요)";
+
+    if (showSuccessToast) {
+      showToast("불러오기 실패");
+    }
+  }
+}
+
 // ======================
 // 분석 로직
 // ======================
@@ -329,28 +369,7 @@ $themeToggle?.addEventListener("click", () => {
 });
 
 $btnLoad.addEventListener("click", async () => {
-  try {
-    $status.textContent = "데이터 불러오는 중...";
-    recent30 = await loadResults();
-
-    // 분석
-    const groupFreq = analyzeGroupFreq(recent30);
-    const posFreq = analyzeDigitPosFreq(recent30);
-
-    // 렌더
-    renderRecentTable(recent30);
-    renderGroupSummary(groupFreq);
-
-    drawGroupChart(groupFreq);
-    drawDigitChart(posFreq, Number($posSelect.value));
-
-    $status.textContent = `✅ 최근 ${recent30.length}회 데이터 로딩 완료`;
-    showToast("최근 30회 불러오기 완료!");
-  } catch (e) {
-    console.error(e);
-    $status.textContent = "❌ 데이터 로딩 실패 (results.json 확인 필요)";
-    showToast("불러오기 실패");
-  }
+  await loadAndRenderResults({ showSuccessToast: true });
 });
 
 $btnUpdatePos.addEventListener("click", () => {
@@ -381,3 +400,5 @@ $btnCopyReco.addEventListener("click", async () => {
   await navigator.clipboard.writeText(lastRecommendations.join("\n"));
   showToast("추천번호 전체 복사 완료!");
 });
+
+void loadAndRenderResults();

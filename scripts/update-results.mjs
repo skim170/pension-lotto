@@ -1,9 +1,11 @@
 import { readFile, writeFile } from "node:fs/promises";
 
 const RESULTS_PATH = new URL("../data/results.json", import.meta.url);
+const SITEMAP_PATH = new URL("../sitemap.xml", import.meta.url);
 const RESULTS_LIST_URL =
   process.env.PENSION_RESULTS_LIST_URL ||
   "https://www.dhlottery.co.kr/pt720/selectPstPt720WnList.do";
+const SITE_URL = (process.env.SITE_URL || "https://skim170.github.io/pension-lotto").replace(/\/+$/, "");
 const USER_AGENT =
   process.env.PENSION_USER_AGENT ||
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0 Safari/537.36";
@@ -96,6 +98,19 @@ function dedupeAndSort(list) {
   return Array.from(byRound.values()).sort((a, b) => b.round - a.round);
 }
 
+function buildSitemap(lastModified) {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>${SITE_URL}/</loc>
+    <lastmod>${lastModified}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>
+`;
+}
+
 async function main() {
   const existing = await readExistingResults();
   const payload = await fetchJson(RESULTS_LIST_URL);
@@ -119,6 +134,9 @@ async function main() {
     JSON.stringify(nextResults, null, 2) + "\n",
     "utf8"
   );
+
+  const latestModified = nextResults[0]?.date || new Date().toISOString().slice(0, 10);
+  await writeFile(SITEMAP_PATH, buildSitemap(latestModified), "utf8");
 
   console.log(
     `Synced ${nextResults.length} rounds. Latest round: ${nextLatestRound}. Added: ${addedRounds}. Removed: ${removedRounds}.`
