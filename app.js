@@ -23,6 +23,10 @@ const $recoEmpty = document.getElementById("recoEmpty");
 
 const $posSelect = document.getElementById("posSelect");
 const $btnUpdatePos = document.getElementById("btnUpdatePos");
+const $themeToggle = document.getElementById("themeToggle");
+const $themeToggleLabel = document.getElementById("themeToggleLabel");
+
+const THEME_STORAGE_KEY = "pension-lotto-theme";
 
 // ======================
 // 유틸
@@ -43,6 +47,41 @@ function randInt(min, max) {
 
 function pad6(n) {
   return String(n).padStart(6, "0");
+}
+
+function getCssVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+function readThemePreference() {
+  try {
+    return localStorage.getItem(THEME_STORAGE_KEY) === "dark" ? "dark" : "light";
+  } catch {
+    return "light";
+  }
+}
+
+function writeThemePreference(theme) {
+  try {
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+  } catch {
+    // 저장을 못 하더라도 기본 테마 동작은 유지
+  }
+}
+
+function updateThemeToggle(theme) {
+  if (!$themeToggle) return;
+
+  const isDark = theme === "dark";
+  $themeToggle.setAttribute("aria-pressed", String(isDark));
+  $themeToggle.setAttribute("aria-label", isDark ? "라이트 모드로 전환" : "다크 모드로 전환");
+  $themeToggleLabel.textContent = isDark ? "다크 모드" : "라이트 모드";
+}
+
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  updateThemeToggle(theme);
+  refreshCharts();
 }
 
 // 가중치 배열에서 1개 뽑기 (weights: [w0,w1,...])
@@ -128,7 +167,7 @@ function renderRecentTable(list) {
     tr.innerHTML = `
       <td>${r.round}</td>
       <td>${r.date || "-"}</td>
-      <td><b>${r.group}조 ${String(r.num).padStart(6,"0")}</b></td>
+      <td><b>${r.group}조 ${pad6(r.num)}</b></td>
     `;
     $recentTbody.appendChild(tr);
   }
@@ -183,51 +222,112 @@ function renderGroupSummary(freq) {
 // ======================
 // 차트
 // ======================
+function getChartPalette() {
+  return {
+    tickColor: getCssVar("--chart-tick"),
+    gridColor: getCssVar("--chart-grid"),
+    barColor: getCssVar("--chart-bar"),
+    barBorderColor: getCssVar("--chart-bar-border")
+  };
+}
+
+function createBarChartOptions() {
+  const { tickColor, gridColor } = getChartPalette();
+
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: {
+        ticks: { color: tickColor },
+        grid: { display: false },
+        border: { color: gridColor }
+      },
+      y: {
+        beginAtZero: true,
+        ticks: { precision: 0, color: tickColor },
+        grid: { color: gridColor },
+        border: { color: gridColor }
+      }
+    }
+  };
+}
+
 function drawGroupChart(groupFreq) {
   const ctx = document.getElementById("chartGroup");
-
   const labels = ["1조","2조","3조","4조","5조"];
   const values = [1,2,3,4,5].map(g => groupFreq[g] || 0);
+  const { barColor, barBorderColor } = getChartPalette();
 
   if (groupChart) groupChart.destroy();
   groupChart = new Chart(ctx, {
     type: "bar",
     data: {
       labels,
-      datasets: [{ label: "출현 횟수", data: values }]
+      datasets: [{
+        label: "출현 횟수",
+        data: values,
+        backgroundColor: barColor,
+        borderColor: barBorderColor,
+        borderWidth: 1,
+        borderRadius: 8,
+        maxBarThickness: 40
+      }]
     },
-    options: {
-      responsive: true,
-      plugins: { legend: { display: false } },
-      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
-    }
+    options: createBarChartOptions()
   });
 }
 
 function drawDigitChart(posFreq, posIndex) {
   const ctx = document.getElementById("chartDigit0");
-
   const labels = ["0","1","2","3","4","5","6","7","8","9"];
   const values = posFreq[posIndex];
+  const { barColor, barBorderColor } = getChartPalette();
 
   if (digitChart) digitChart.destroy();
   digitChart = new Chart(ctx, {
     type: "bar",
     data: {
       labels,
-      datasets: [{ label: "출현 횟수", data: values }]
+      datasets: [{
+        label: "출현 횟수",
+        data: values,
+        backgroundColor: barColor,
+        borderColor: barBorderColor,
+        borderWidth: 1,
+        borderRadius: 8,
+        maxBarThickness: 32
+      }]
     },
-    options: {
-      responsive: true,
-      plugins: { legend: { display: false } },
-      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
-    }
+    options: createBarChartOptions()
   });
+}
+
+function refreshCharts() {
+  if (!recent30.length) return;
+
+  const groupFreq = analyzeGroupFreq(recent30);
+  const posFreq = analyzeDigitPosFreq(recent30);
+
+  drawGroupChart(groupFreq);
+  drawDigitChart(posFreq, Number($posSelect.value));
 }
 
 // ======================
 // 이벤트
 // ======================
+applyTheme(readThemePreference());
+
+$themeToggle?.addEventListener("click", () => {
+  const currentTheme = document.documentElement.dataset.theme === "dark" ? "dark" : "light";
+  const nextTheme = currentTheme === "dark" ? "light" : "dark";
+
+  applyTheme(nextTheme);
+  writeThemePreference(nextTheme);
+  showToast(nextTheme === "dark" ? "다크 모드로 전환했습니다." : "라이트 모드로 전환했습니다.");
+});
+
 $btnLoad.addEventListener("click", async () => {
   try {
     $status.textContent = "데이터 불러오는 중...";
